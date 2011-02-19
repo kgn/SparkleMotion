@@ -1,19 +1,50 @@
+#Copyright (c) 2011 David Keegan
+#
+#Permission is hereby granted, free of charge, to any person obtaining a copy
+#of this software and associated documentation files (the "Software"), to deal
+#in the Software without restriction, including without limitation the rights
+#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#copies of the Software, and to permit persons to whom the Software is
+#furnished to do so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in
+#all copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+#THE SOFTWARE.
+#
+#https://github.com/InScopeApps/SparkleMotion
+#
+
+__all__ = (
+    'GetAppInfoData',
+    'GetAppShortStringVersion',
+    'GetDsaSignature',
+    'ZipDir',
+    'SparkleMotion',
+)
+
 import os
 import zipfile
 import subprocess
 import plistlib
 import time
 from datetime import datetime
+import urllib
 
-def GetAppInfoData(appFile):
+def GetAppInfoData(appPath):
     '''Get the value of CFBundleVersion or 0'''
-    infoPlist = os.path.join(appFile, 'Contents', 'Info.plist')
+    infoPlist = os.path.join(appPath, 'Contents', 'Info.plist')
     return plistlib.readPlist(infoPlist)
 
-def GetAppShortStringVersion(appFile):
+def GetAppShortStringVersion(appPath):
     '''Get the value of CFBundleShortVersionString or None'''
-    infoPlist = os.path.join(appFile, 'Contents', 'Info.plist')
-    data = plistlib.readPlist(infoPlist)
+    data = GetAppInfoData(appPath)
     return data.get('CFBundleShortVersionString')
 
 def GetDsaSignature(zipFile, privPem):
@@ -65,6 +96,7 @@ class SparkleMotion(object):
     urlRoot = None
     appCastFileName = None
     stagingAreaPath = None
+    zipUrlRoot = None
     
     def zipFileName(self):
         '''Specity the formatting of the zip file'''
@@ -128,7 +160,10 @@ class SparkleMotion(object):
             
         if not self.appCastFileName:
             raise IOError('appCastFileName is not valid: %s' % self.appCastFileName)
-            
+        
+        if not self.zipUrlRoot:
+            self.zipUrlRoot = self.urlRoot
+        
         self.__appInfo = GetAppInfoData(self.appPath)
             
         self.__appName = os.path.splitext(os.path.basename(self.appPath))[0]
@@ -160,7 +195,6 @@ class SparkleMotion(object):
     
     def getItem(self):
         '''Get the item block for the appcast'''
-        urlRoot = self.urlRoot
         dsaSignature =  GetDsaSignature(self.zipPath(), self.privPemPath)
         
         items = []
@@ -178,7 +212,7 @@ class SparkleMotion(object):
         items.append('<pubDate>%s</pubDate>' % pubDate)
         
         #enclosure
-        items.append('<enclosure url="%s"' % os.path.join(urlRoot, os.path.basename(self.zipPath())))
+        items.append('<enclosure url="%s"' % os.path.join(self.zipUrlRoot, urllib.quote(os.path.basename(self.zipPath()))))
         items.append('\tsparkle:version="%s"' % self.version())
         if self.shortVersionString() is not None:
             items.append('\tsparkle:shortVersionString="%s"' % self.shortVersionString())
