@@ -1,9 +1,8 @@
-SparkleMotion is a python package for creating Sparkle updates.
-http://sparkle.andymatuschak.org/
+SparkleMotion is a python package for creating [Sparkle](http://sparkle.andymatuschak.org) updates.
 
-To use it subclass SparkleMotion, set the required variables and overwrite any functions you want to format the various files and labels. 
+To use it subclass `SparkleMotion`, set the required variables and overwrite any functions you want to format the various files and labels. 
 
-ChopShop Example:
+``` python
 class ChopShopUpdate(SparkleMotion):
     urlRoot = 'http://appcast.inscopeapps.com/ChopShop/'
     appPath = '/mercurial/projects/ChopShop/build/Release/ChopShop.app'
@@ -31,3 +30,4 @@ class ChopShopUpdate(SparkleMotion):
 	   '''
         
 ChopShopUpdate().run()
+```
